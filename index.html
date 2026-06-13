@@ -3,31 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>이미지 호버 & 터치 최적화</title>
+    <title>숨겨진 진리의 연기</title>
     <style>
         body {
-            /* 모바일에서 여백이 보기 좋게 나오도록 기본 설정 추가 */
             margin: 0;
             padding: 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column; /* 사진과 버튼을 위아래로 정렬 */
+            align-items: center;
             background-color: #f9f9f9;
+            font-family: sans-serif;
         }
 
         .photo-wrapper {
             position: relative;
-            /* 📱 모바일 최적화 핵심 2: 고정된 500px 대신 화면 꽉 차게(100%), 
-               단, PC에서는 최대 500px까지만 커지도록 설정 */
             width: 100%;
             max-width: 500px;
-            aspect-ratio: 1 / 1; /* 1:1 정사각형 비율을 항상 유지 */
+            aspect-ratio: 1 / 1;
             border: 2px solid #ccc;
-            overflow: hidden; /* 이미지 둥글게 깎거나 할 때 삐져나오지 않게 함 */
+            border-radius: 12px; /* 모바일에 어울리게 모서리를 약간 둥글게 */
+            overflow: hidden;
+            margin-bottom: 20px; /* 아래 버튼과의 간격 */
             
             /* 요술봉 마우스 커서 (데스크톱용) */
             cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" style="font-size: 24px;"><text y="24">🪄</text></svg>'), auto;
-            
-            /* 모바일에서 이미지를 길게 터치했을 때 저장 메뉴가 뜨는 것 방지 */
             -webkit-touch-callout: none;
             user-select: none;
         }
@@ -47,6 +46,7 @@
             opacity: 0;
         }
 
+        /* PC용 호버 트리거 (모바일에서는 쓰이지 않지만 PC 겸용으로 남겨둠) */
         #mouth-trigger {
             position: absolute;
             top: 45%; 
@@ -55,50 +55,67 @@
             height: 15%;
             background: rgba(255, 0, 0, 0); 
             z-index: 2;
-            /* 모바일에서 터치할 때 생기는 반투명한 파란색/회색 박스 숨김 */
-            -webkit-tap-highlight-color: transparent;
         }
 
-        /* PC 마우스 호버 효과 & 모바일 터치 클래스 동시 적용 */
-        #mouth-trigger:hover ~ #img-clean,
-        #mouth-trigger.active ~ #img-clean {
-            opacity: 0;
+        /* 1. 기존 PC 마우스 호버 동작 */
+        #mouth-trigger:hover ~ #img-clean { opacity: 0; }
+        #mouth-trigger:hover ~ #img-active { opacity: 1; }
+
+        /* 2. ★ 버튼 클릭 시 적용될 상태 ★ (wrapper에 active 클래스가 붙으면 발동) */
+        .photo-wrapper.active #img-clean { opacity: 0; }
+        .photo-wrapper.active #img-active { opacity: 1; }
+
+        /* 어두운 색을 피하고 밝고 부드러운 톤으로 디자인한 버튼 */
+        .toggle-btn {
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #faf9f6; /* 은은한 오프화이트/스타라이트 색상 */
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        #mouth-trigger:hover ~ #img-active,
-        #mouth-trigger.active ~ #img-active {
-            opacity: 1;
+        /* 버튼을 눌렀을 때의 효과 */
+        .toggle-btn:active {
+            background-color: #eee;
+            transform: scale(0.96); /* 살짝 눌려 들어가는 애니메이션 */
         }
     </style>
 </head>
 <body>
 
-    <div class="photo-wrapper">
+    <div class="photo-wrapper" id="photo-container">
         <div id="mouth-trigger"></div>
-        
         <img id="img-clean" src="https://www.ehom.co.kr/news/2024/11/12/d5aaca660e8ae9c023e3fdc116b98757114119.png" alt="기본 상태">
         <img id="img-active" src="https://strict-jade-rskjbb0w.edgeone.app/Gemini_Generated_Image_l2atnml2atnml2at.png" alt="막대기 가져간 상태">
     </div>
 
+    <button id="toggle-btn" class="toggle-btn">막대 가져가기 🪄</button>
+
     <script>
-        // 📱 모바일 최적화 핵심 3: 스마트폰은 '호버'가 없으므로 터치를 인식하는 자바스크립트 추가
-        const trigger = document.getElementById('mouth-trigger');
-
-        // 손가락이 입 부분에 닿았을 때 (터치 시작)
-        trigger.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // 화면이 스크롤되거나 더블탭 확대되는 것 방지
-            trigger.classList.add('active'); // active 클래스를 붙여서 이미지 변경
-        });
-
-        // 손가락을 뗐을 때 (터치 종료)
-        trigger.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            trigger.classList.remove('active'); // 원상복구
-        });
+        const photoContainer = document.getElementById('photo-container');
+        const toggleBtn = document.getElementById('toggle-btn');
         
-        // 터치한 상태로 손가락이 화면 밖으로 나갔을 때 예외 처리
-        trigger.addEventListener('touchcancel', () => {
-            trigger.classList.remove('active');
+        // 현재 상태를 저장 (false: 기본 사진, true: 바뀐 사진)
+        let isImageChanged = false;
+
+        // 버튼을 클릭했을 때 실행되는 함수
+        toggleBtn.addEventListener('click', () => {
+            isImageChanged = !isImageChanged; // 상태를 반대로 뒤집음
+
+            if (isImageChanged) {
+                // 이미지가 바뀌어야 할 때
+                photoContainer.classList.add('active'); // CSS 변화 발동
+                toggleBtn.innerText = '다시 경건한 모습으로'; // 버튼 글씨 변경
+            } else {
+                // 기본 이미지로 돌아와야 할 때
+                photoContainer.classList.remove('active'); // CSS 변화 원상복구
+                toggleBtn.innerText = '숨겨진 진리 마주하기'; // 버튼 글씨 원상복구
+            }
         });
     </script>
 
