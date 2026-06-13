@@ -2,16 +2,34 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>이미지 호버 테스트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>이미지 호버 & 터치 최적화</title>
     <style>
+        body {
+            /* 모바일에서 여백이 보기 좋게 나오도록 기본 설정 추가 */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            background-color: #f9f9f9;
+        }
+
         .photo-wrapper {
             position: relative;
-            width: 500px;
-            height: 500px;
-            margin: 20px auto;
+            /* 📱 모바일 최적화 핵심 2: 고정된 500px 대신 화면 꽉 차게(100%), 
+               단, PC에서는 최대 500px까지만 커지도록 설정 */
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1 / 1; /* 1:1 정사각형 비율을 항상 유지 */
             border: 2px solid #ccc;
-            /* 요술봉 마우스 커서 */
+            overflow: hidden; /* 이미지 둥글게 깎거나 할 때 삐져나오지 않게 함 */
+            
+            /* 요술봉 마우스 커서 (데스크톱용) */
             cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" style="font-size: 24px;"><text y="24">🪄</text></svg>'), auto;
+            
+            /* 모바일에서 이미지를 길게 터치했을 때 저장 메뉴가 뜨는 것 방지 */
+            -webkit-touch-callout: none;
+            user-select: none;
         }
 
         #img-clean, #img-active {
@@ -31,10 +49,61 @@
 
         #mouth-trigger {
             position: absolute;
-            top: 45%; /* 테스트 이미지에 맞춘 임시 위치 */
+            top: 45%; 
             left: 40%;
             width: 20%;
             height: 15%;
+            background: rgba(255, 0, 0, 0); 
+            z-index: 2;
+            /* 모바일에서 터치할 때 생기는 반투명한 파란색/회색 박스 숨김 */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* PC 마우스 호버 효과 & 모바일 터치 클래스 동시 적용 */
+        #mouth-trigger:hover ~ #img-clean,
+        #mouth-trigger.active ~ #img-clean {
+            opacity: 0;
+        }
+
+        #mouth-trigger:hover ~ #img-active,
+        #mouth-trigger.active ~ #img-active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="photo-wrapper">
+        <div id="mouth-trigger"></div>
+        
+        <img id="img-clean" src="https://www.ehom.co.kr/news/2024/11/12/d5aaca660e8ae9c023e3fdc116b98757114119.png" alt="기본 상태">
+        <img id="img-active" src="https://strict-jade-rskjbb0w.edgeone.app/Gemini_Generated_Image_l2atnml2atnml2at.png" alt="막대기 가져간 상태">
+    </div>
+
+    <script>
+        // 📱 모바일 최적화 핵심 3: 스마트폰은 '호버'가 없으므로 터치를 인식하는 자바스크립트 추가
+        const trigger = document.getElementById('mouth-trigger');
+
+        // 손가락이 입 부분에 닿았을 때 (터치 시작)
+        trigger.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // 화면이 스크롤되거나 더블탭 확대되는 것 방지
+            trigger.classList.add('active'); // active 클래스를 붙여서 이미지 변경
+        });
+
+        // 손가락을 뗐을 때 (터치 종료)
+        trigger.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            trigger.classList.remove('active'); // 원상복구
+        });
+        
+        // 터치한 상태로 손가락이 화면 밖으로 나갔을 때 예외 처리
+        trigger.addEventListener('touchcancel', () => {
+            trigger.classList.remove('active');
+        });
+    </script>
+
+</body>
+</html>            height: 15%;
             /* 위치 확인용 반투명 빨간색 (위치를 다 맞추면 rgba(255,0,0,0)으로 변경하세요) */
             background: rgba(255, 0, 0, 0); 
             z-index: 2;
