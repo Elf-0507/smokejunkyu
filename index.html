@@ -3,118 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>숨겨진 진리의 연기</title>
+    <title>금단의 사과</title>
     <style>
         body {
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column; /* 사진과 버튼을 위아래로 정렬 */
-            align-items: center;
-            background-color: #f9f9f9;
-            font-family: sans-serif;
+            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; 
+            background-color: #faf9f6; font-family: sans-serif;
+        }
+
+        /* ☁️ 상단에 쌓이는 연기 효과 */
+        #smoke-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 50%;
+            /* 위에서 아래로 옅어지는 검은 안개 그라데이션 */
+            background: linear-gradient(to bottom, rgba(50,50,50,0.8), transparent);
+            opacity: 0; transition: opacity 0.5s ease; pointer-events: none; z-index: 10;
+        }
+
+        /* 상태를 보여주는 텍스트 */
+        .status-board { 
+            margin-bottom: 15px; font-weight: bold; color: #555; z-index: 11; transition: color 0.3s;
         }
 
         .photo-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 500px;
-            aspect-ratio: 1 / 1;
-            border: 2px solid #ccc;
-            border-radius: 12px; /* 모바일에 어울리게 모서리를 약간 둥글게 */
-            overflow: hidden;
-            margin-bottom: 20px; /* 아래 버튼과의 간격 */
-            
-            /* 요술봉 마우스 커서 (데스크톱용) */
+            position: relative; width: 100%; max-width: 500px; aspect-ratio: 1 / 1;
+            border: 2px solid #ccc; border-radius: 12px; overflow: hidden; margin-bottom: 20px;
             cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" style="font-size: 24px;"><text y="24">🪄</text></svg>'), auto;
-            -webkit-touch-callout: none;
-            user-select: none;
+            -webkit-touch-callout: none; user-select: none;
         }
-
-        #img-clean, #img-active {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: opacity 0.3s ease;
-            z-index: 1;
+        
+        #img-clean, #img-active, #img-final {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; transition: opacity 0.3s ease; z-index: 1;
         }
-
-        #img-active {
-            opacity: 0;
-        }
-
-        /* PC용 호버 트리거 (모바일에서는 쓰이지 않지만 PC 겸용으로 남겨둠) */
-        #mouth-trigger {
-            position: absolute;
-            top: 45%; 
-            left: 40%;
-            width: 20%;
-            height: 15%;
-            background: rgba(255, 0, 0, 0); 
-            z-index: 2;
-        }
-
-        /* 1. 기존 PC 마우스 호버 동작 */
-        #mouth-trigger:hover ~ #img-clean { opacity: 0; }
-        #mouth-trigger:hover ~ #img-active { opacity: 1; }
-
-        /* 2. ★ 버튼 클릭 시 적용될 상태 ★ (wrapper에 active 클래스가 붙으면 발동) */
+        #img-active, #img-final { opacity: 0; }
+        
+        /* 버튼 액티브 상태 (1~4회차) */
         .photo-wrapper.active #img-clean { opacity: 0; }
         .photo-wrapper.active #img-active { opacity: 1; }
+        
+        /* 💥 최종 각성 상태 (5회차 도달 시) */
+        .photo-wrapper.final-stage #img-clean,
+        .photo-wrapper.final-stage #img-active { opacity: 0 !important; }
+        .photo-wrapper.final-stage #img-final { opacity: 1; z-index: 5; }
 
-        /* 어두운 색을 피하고 밝고 부드러운 톤으로 디자인한 버튼 */
         .toggle-btn {
-            padding: 14px 28px;
-            font-size: 16px;
-            font-weight: bold;
-            background-color: #faf9f6; /* 은은한 오프화이트/스타라이트 색상 */
-            color: #333;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            cursor: pointer;
-            transition: all 0.2s ease;
+            padding: 14px 28px; font-size: 16px; font-weight: bold; background-color: #fff;
+            color: #333; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            cursor: pointer; transition: all 0.2s ease; z-index: 11;
         }
-
-        /* 버튼을 눌렀을 때의 효과 */
-        .toggle-btn:active {
-            background-color: #eee;
-            transform: scale(0.96); /* 살짝 눌려 들어가는 애니메이션 */
+        .toggle-btn:active { transform: scale(0.96); background-color: #eee; }
+        
+        /* 최종 단계에서 버튼이 비활성화되었을 때의 디자인 */
+        .toggle-btn:disabled { 
+            opacity: 0.5; cursor: not-allowed; transform: none; background-color: #ffeaea; color: #d32f2f; border-color: #d32f2f;
         }
     </style>
 </head>
 <body>
 
+    <div id="smoke-overlay"></div>
+    
+    <div class="status-board" id="status-board">타락 게이지: 0 / 5 ☁️</div>
+
     <div class="photo-wrapper" id="photo-container">
-        <div id="mouth-trigger"></div>
         <img id="img-clean" src="https://www.ehom.co.kr/news/2024/11/12/d5aaca660e8ae9c023e3fdc116b98757114119.png" alt="기본 상태">
         <img id="img-active" src="https://strict-jade-rskjbb0w.edgeone.app/Gemini_Generated_Image_l2atnml2atnml2at.png" alt="막대기 가져간 상태">
+        <img id="img-final" src="https://democratic-emerald-7ligqquk.edgeone.app/Gemini_Generated_Image_xne11exne11exne1.png" alt="최종 상태">
     </div>
 
-    <button id="toggle-btn" class="toggle-btn">숨겨진 진리 마주하기</button>
+    <button id="toggle-btn" class="toggle-btn">금단의 막대 허락하기 🍎</button>
 
     <script>
         const photoContainer = document.getElementById('photo-container');
         const toggleBtn = document.getElementById('toggle-btn');
+        const smokeOverlay = document.getElementById('smoke-overlay');
+        const statusBoard = document.getElementById('status-board');
         
-        // 현재 상태를 저장 (false: 기본 사진, true: 바뀐 사진)
         let isImageChanged = false;
+        let useCount = 0; // 현재 사용 횟수
+        const MAX_COUNT = 5; // 최종 상태로 변하는 목표 횟수
 
-        // 버튼을 클릭했을 때 실행되는 함수
         toggleBtn.addEventListener('click', () => {
-            isImageChanged = !isImageChanged; // 상태를 반대로 뒤집음
+            isImageChanged = !isImageChanged;
 
             if (isImageChanged) {
-                // 이미지가 바뀌어야 할 때
-                photoContainer.classList.add('active'); // CSS 변화 발동
-                toggleBtn.innerText = '다시 경건한 모습으로'; // 버튼 글씨 변경
+                // 막대를 허락할 때마다 카운트 증가
+                useCount++;
+                photoContainer.classList.add('active');
+                toggleBtn.innerText = '다시 경건한 모습으로 🙏';
+                
+                // 화면 위쪽 연기(안개) 짙어지게 하기
+                let smokeLevel = useCount / MAX_COUNT;
+                smokeOverlay.style.opacity = smokeLevel;
+                statusBoard.innerText = `타락 게이지: ${useCount} / ${MAX_COUNT} ☁️`;
+
+                // ✨ 특정 값(MAX_COUNT)에 도달했을 때의 이벤트
+                if (useCount >= MAX_COUNT) {
+                    photoContainer.classList.remove('active');
+                    photoContainer.classList.add('final-stage'); // 최종 사진 띄우기
+                    
+                    toggleBtn.innerText = '돌이킬 수 없는 강을 건넜습니다 💀';
+                    toggleBtn.disabled = true; // 더 이상 클릭 못하게 비활성화
+                    
+                    statusBoard.innerText = 'MAX: 완전히 타락했습니다!';
+                    statusBoard.style.color = 'red'; // 글씨색 빨간색으로 변경
+                }
             } else {
-                // 기본 이미지로 돌아와야 할 때
-                photoContainer.classList.remove('active'); // CSS 변화 원상복구
-                toggleBtn.innerText = '숨겨진 진리 마주하기'; // 버튼 글씨 원상복구
+                // 아직 최대치에 도달하지 않았고, 막대를 치울 때
+                if (useCount < MAX_COUNT) {
+                    photoContainer.classList.remove('active');
+                    toggleBtn.innerText = '금단의 막대 허락하기 🍎';
+                }
             }
         });
     </script>
